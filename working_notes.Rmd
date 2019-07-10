@@ -1,0 +1,42 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#get the data i need
+i am going to try to dl the data from here
+https://ncses.nsf.gov/pubs/nsf19301/data 
+i want table 033 for each year
+here is 2017:
+https://ncses.nsf.gov/pubs/nsf19301/data
+here is 2016:
+https://www.nsf.gov/statistics/2018/nsf18304/data.cfm
+here is 2015 
+https://www.nsf.gov/statistics/2017/nsf17306/data.cfm 
+here is 2014
+https://www.nsf.gov/statistics/2016/nsf16300/data-tables.cfm
+
+https://www.nsf.gov/statistics/2016/nsf16300/data/tab33.xlsx
+
+here is 2013:
+https://www.nsf.gov/statistics/sed/2013/data-tables.cfm
+
+https://www.nsf.gov/statistics/sed/2013/data/tab33.xlsx
+
+so it looks like not standard location
+
+also note, 2011 and before is archived
+so 2011:
+https://wayback.archive-it.org/5902/20181003230029/https://www.nsf.gov/statistics/sed/2011/
+
+2010:
+https://wayback.archive-it.org/5902/20181003231120/https://www.nsf.gov/statistics/sed/2010/SED_2010.zip
+
+question now is how many years do we have access to?
+
+
+## ok, so this isn't going to be easy. maybe best bet is not to do script and just d/l table 33 for each avilbale year
