@@ -27,3 +27,9 @@ View(temp)
 
 
 #look here: https://nacnudus.github.io/spreadsheet-munging-strategies/pivot-simple.html
+# and here: https://www.youtube.com/watch?v=1sinC7wsS5U 
+# for above check at 18:40 for hints but prob need to watch whole thing
+# and this: http://rpubs.com/dgrtwo/tidying-enron
+
+#this might be better than other video: https://www.youtube.com/watch?v=Q_McYaDV9H0 
+# check arouf 2:50
