@@ -33,3 +33,7 @@ View(temp)
 
 #this might be better than other video: https://www.youtube.com/watch?v=Q_McYaDV9H0 
 # check arouf 2:50
+
+
+#AND THIS!
+#https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-02-19
