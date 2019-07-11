@@ -3,6 +3,10 @@
 
 library(readxl)
 library(tidyverse)
+library(unpivotr)
+library(tidyxl)
+library(knitr)
+library(kableExtra)
 temp <- read_excel("data/sed17-sr-tab033.xlsx", skip=3)
 glimpse(temp)
 View(temp)
@@ -143,7 +147,107 @@ data_2017 %>% filter(!is.na(value)) %>% select(-field1) %>% filter(field2 == "Fi
 
 
 
-#######
+###############################
+##################################
+#better format since doesn't require excel edits
+##############
+
+cells <- xlsx_cells("data/sed17-sr-tab033.xlsx") #get data
+cells %>% select(row, col, data_type, character, numeric, local_format_id)
+# so first cell has value 'table 33' r 1 c 1
+formats <- xlsx_formats("data/sed17-sr-tab033.xlsx") 
+#list of lists. it descibres the state of the cell. is it bold? etc
+#there is also an allignment 
+
+#we can look up the local format id from the cells table to see the format of that cell
+#we want to know if cell is indented
+
+#look under alignment and then the indent 'leaf'
+#also need to know the Direction that we need to go..NNW etc
+
+indent <-formats$local$alignment$indent
+data_2017 <- cells %>% 
+  filter(row >= 4L) %>% 
+  behead_if(indent[local_format_id] == 0, direction= "WNW", name ="field1") %>%  #only consider header cells that have indent of zero. to do this we index into the indent vector. we look at each cell's local format id and see if it = 0
+  #select(row, col, data_type, character, numeric, field1) %>%  #note that it is assingign some of the header cells to have a value. will fix as we go
+  #filter(row >= 9)
+  #now, lets strip off the second level
+  behead_if(indent[local_format_id] == 1, direction= "WNW", name ="field2") %>%  #only consider header cells that have indent of zero. to do this we index into the indent vector. we look at each cell's local format id and see if it = 0
+  #select(row, col, data_type, character, numeric, field1, field2) %>%  #note that it is assingign some of the header cells to have a value. will fix as we go
+  #filter(row >= 9)
+  behead_if(indent[local_format_id] == 2, direction= "WNW", name ="field3") %>%  #only consider header cells that have indent of zero. to do this we index into the indent vector. we look at each cell's local format id and see if it = 0
+  behead_if(indent[local_format_id] == 3, direction= "WNW", name ="field4") %>%  #only consider header cells that have indent of zero. to do this we index into the indent vector. we look at each cell's local format id and see if it = 0
+  behead("N", name="parents_data1") %>%
+  behead("N", name="parents_data2") %>% 
+  select(row, col, field1:field4, parents_data1, parents_data2 , value = numeric) 
+
+
+#data_analysis
+
+data_2017 %>% filter(!is.na(value)) %>% select(-field1) %>% 
+  filter(field2 == "Field of study",
+         field4 == "Father's education") %>% 
+  group_by(parents_data2) %>% 
+  filter(is.na(parents_data1)) %>% 
+  summarise(median(value)) %>% 
+  kable(caption = "Father's education") %>%
+  kable_styling()
+
+data_2017 %>% filter(!is.na(value)) %>% select(-field1) %>% 
+  filter(field2 == "Field of study",
+         field4 == "Mother's education") %>% 
+  group_by(parents_data2) %>% 
+  filter(is.na(parents_data1)) %>% 
+  summarise(median(value)) %>% 
+  kable(caption = "Mother's education") %>%
+  kable_styling()
+
+           
+         
+         
+ 
+
+
+data_2017 %>% filter(!is.na(value)) %>% select(-field1) %>% filter(field2 == "Field of study") %>% filter(field4 == "Father's education") %>%
+  group_by(parents_data) %>%filter(parents_data != "Total (number)",
+                                   parents_data != "All")   %>% 
+  summarise(median(value)) %>% knitr::kable(caption = "father's education attainment 2017") %>% kableExtra::kable_styling()
+
+
+########### scratch below
+
+
+#can i do with the col headers too?
+
+cells <- xlsx_cells("data/sed17-sr-tab033.xlsx") #get data
+cells %>% select(row, col, data_type, character, numeric, local_format_id)
+# so first cell has value 'table 33' r 1 c 1
+formats <- xlsx_formats("data/sed17-sr-tab033.xlsx") 
+#list of lists. it descibres the state of the cell. is it bold? etc
+#there is also an allignment 
+
+#we can look up the local format id from the cells table to see the format of that cell
+#we want to know if cell is indented
+
+#look under alignment and then the indent 'leaf'
+#also need to know the Direction that we need to go..NNW etc
+
+indent <-formats$local$alignment$indent
+cells %>% 
+  filter(row >= 4L) %>% 
+  behead_if(indent[local_format_id] == 0, direction= "WNW", name ="field1") %>%  #only consider header cells that have indent of zero. to do this we index into the indent vector. we look at each cell's local format id and see if it = 0
+  #select(row, col, data_type, character, numeric, field1) %>%  #note that it is assingign some of the header cells to have a value. will fix as we go
+  #filter(row >= 9)
+  #now, lets strip off the second level
+  behead_if(indent[local_format_id] == 1, direction= "WNW", name ="field2") %>%  #only consider header cells that have indent of zero. to do this we index into the indent vector. we look at each cell's local format id and see if it = 0
+  #select(row, col, data_type, character, numeric, field1, field2) %>%  #note that it is assingign some of the header cells to have a value. will fix as we go
+  #filter(row >= 9)
+  behead_if(indent[local_format_id] == 2, direction= "WNW", name ="field3") %>%  #only consider header cells that have indent of zero. to do this we index into the indent vector. we look at each cell's local format id and see if it = 0
+  behead_if(indent[local_format_id] == 3, direction= "WNW", name ="field4") %>%  #only consider header cells that have indent of zero. to do this we index into the indent vector. we look at each cell's local format id and see if it = 0
+  behead("N", name="parents_data1") %>%
+  behead("N", name="parents_data2") %>% 
+  select(row, col, field1:field4, parents_data1, parents_data2 , value = numeric) %>% 
+  View()
 
 
 

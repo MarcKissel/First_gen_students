@@ -1,0 +1,405 @@
+---
+title: "reading in data from NSF"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+libraries 
+```{r}
+library(readxl)
+library(tidyverse)
+library(unpivotr)
+library(tidyxl)
+library(knitr)
+library(kableExtra)
+```
+
+Problem with the data is that it is a pivot table.
+
+prob is that the first col has data that is indented but that doesn't show up in the text. when you import with readxl it only import the value. but that leading space is impt. tidyxl package imports each cell into its own row and imports formatting need
+
+## get the data into a good format
+
+```{r}
+cells <- xlsx_cells("data/sed17-sr-tab033.xlsx") #get data
+#cells %>% select(row, col, data_type, character, numeric, local_format_id) #check how it is stored the first cell has value 
+#'table 33' r 1 c 1
+formats <- xlsx_formats("data/sed17-sr-tab033.xlsx") #the formats
+#a list of lists. it descibres the state of the cell. is it bold? etc. there is also an allignment leaf.
+##we can look up the local format id from the cells table to see #the format of that cell
+#we want to know if cell is indented
+
+#look under alignment and then the indent 'leaf'
+#also need to know the Direction that we need to go..NNW etc
+
+
+indent <-formats$local$alignment$indent #makes it easier to get #specific formats
+
+#now, we strip off headers...
+
+data_2017 <- cells %>% 
+  filter(row >= 4L) %>% 
+  behead_if(indent[local_format_id] == 0, direction= "WNW", name ="field1") %>%  #only consider header cells that have indent of #zero. to do this we index into the indent vector. we look at each #cell's local format id and see if it = 0
+  behead_if(indent[local_format_id] == 1, direction= "WNW", name ="field2") %>%  
+  behead_if(indent[local_format_id] == 2, direction= "WNW", name ="field3") %>% 
+  behead_if(indent[local_format_id] == 3, direction= "WNW", name ="field4") %>% 
+  behead("N", name="parents_data1") %>%
+  behead("N", name="parents_data2") %>% 
+  select(row, col, field1:field4, parents_data1, parents_data2 , value = numeric) 
+
+```
+
+
+#Data analysis
+
+```{r}
+data_2017 %>% filter(!is.na(value)) %>% select(-field1) %>% 
+  filter(field2 == "Field of study",
+         field4 == "Father's education") %>% 
+  group_by(parents_data2) %>% 
+  filter(is.na(parents_data1)) %>% 
+  summarise(median(value)) %>% 
+  kable(caption = "Father's education") %>%
+  kable_styling()
+
+data_2017 %>% filter(!is.na(value)) %>% select(-field1) %>% 
+  filter(field2 == "Field of study",
+         field4 == "Mother's education") %>% 
+  group_by(parents_data2) %>% 
+  filter(is.na(parents_data1)) %>% 
+  summarise(median(value)) %>% 
+  kable(caption = "Mother's education") %>%
+  kable_styling()
+```
+
+
+#ok, so next step is to do this for all the cells and then compare over time?
+#sadly, the different years are slighly different in format so can't use a single purrr code...
+
+#also note that they are stored in percent format in 2016 and 2015
+
+data2016- 
+# in percent format so need to fix
+```{r}
+cells <- xlsx_cells("data/sed16-sr-tab033.xlsx") 
+
+formats <- xlsx_formats("data/sed16-sr-tab033.xlsx") 
+indent <-formats$local$alignment$indent 
+#check which rows to start with
+data_2016 <- cells %>% 
+  filter(row >= 4L) %>%
+  behead_if(indent[local_format_id] == 0, direction= "WNW", name ="field1") %>%  
+  behead_if(indent[local_format_id] == 2, direction= "WNW", name ="field2") %>%  
+  behead_if(indent[local_format_id] == 4, direction= "WNW", name ="field3") %>% 
+  behead_if(indent[local_format_id] == 6, direction= "WNW", name ="field4") %>% 
+  behead("N", name="parents_data1") %>%
+  behead("N", name="parents_data2") %>% 
+  select(row, col, field1:field4, parents_data1, parents_data2 , value = numeric)
+
+View(data_2016)
+```
+
+
+data2015-
+have to change indents calls?
+# in percent format so need to fix
+```{r}
+cells <- xlsx_cells("data/sed15-sr-tab033.xlsx") 
+
+formats <- xlsx_formats("data/sed15-sr-tab033.xlsx") 
+indent <-formats$local$alignment$indent 
+#check which rows to start with
+data_2015 <- cells %>% 
+  filter(row >= 4L) %>%
+  behead_if(indent[local_format_id] == 0, direction= "WNW", name ="field1") %>%  
+  behead_if(indent[local_format_id] == 2, direction= "WNW", name ="field2") %>%  
+  behead_if(indent[local_format_id] == 4, direction= "WNW", name ="field3") %>% 
+  behead_if(indent[local_format_id] == 6, direction= "WNW", name ="field4") %>% 
+  behead("N", name="parents_data1") %>%
+  behead("N", name="parents_data2") %>% 
+  select(row, col, field1:field4, parents_data1, parents_data2 , value = numeric)
+
+View(data_2015)
+```
+
+data2014
+
+```{r}
+cells <- xlsx_cells("data/sed14-sr-tab033.xlsx") 
+
+formats <- xlsx_formats("data/sed14-sr-tab033.xlsx") 
+indent <-formats$local$alignment$indent 
+#check which rows to start with
+data_2014 <- cells %>% 
+  filter(row >= 2L) %>%
+  behead_if(indent[local_format_id] == 0, direction= "WNW", name ="field1") %>%  
+  behead_if(indent[local_format_id] == 1, direction= "WNW", name ="field2") %>%  
+  behead_if(indent[local_format_id] == 2, direction= "WNW", name ="field3") %>% 
+  behead_if(indent[local_format_id] == 3, direction= "WNW", name ="field4") %>% 
+  behead("N", name="parents_data1") %>%
+  behead("N", name="parents_data2") %>% 
+  select(row, col, field1:field4, parents_data1, parents_data2 , value = numeric)
+
+View(data_2014)
+```
+
+
+data 2013
+
+```{r}
+cells <- xlsx_cells("data/sed13-sr-tab033.xlsx") 
+
+formats <- xlsx_formats("data/sed13-sr-tab033.xlsx") 
+indent <-formats$local$alignment$indent 
+#check which rows to start with
+data_2013 <- cells %>% 
+  filter(row >= 2L) %>%
+  behead_if(indent[local_format_id] == 0, direction= "WNW", name ="field1") %>%  
+  behead_if(indent[local_format_id] == 1, direction= "WNW", name ="field2") %>%  
+  behead_if(indent[local_format_id] == 2, direction= "WNW", name ="field3") %>% 
+  behead_if(indent[local_format_id] == 3, direction= "WNW", name ="field4") %>% 
+  behead("N", name="parents_data1") %>%
+  behead("N", name="parents_data2") %>% 
+  select(row, col, field1:field4, parents_data1, parents_data2 , value = numeric)
+
+View(data_2013)
+```
+
+woohoo!
+#data muging to work on
+
+1. categories are diff between 2017-2015/ and 2013/2014....
+a. in  2013 and 2014  there is one category for "Physical science", which includes mathematics and computer and information sciences. Then in 2015+ we get
+breakdown into "Mathematics and computer sciences" and "Physical sciences and earth sciences" so maybe i can combine the cats in the 2017-2015 data sets ("Mathematics and computer sciences" and "Physical sciences and earth sciences") and call them Physical science",
+b. need to change 2017-2015 into "Social sciencesf"
+c. change 'Humanities' into 'Humanities and arts'
+
+2. need to fix issue with percents for 2015 & 2016
+
+3. add year col to each dataset
+
+
+##problem 2
+
+```{r}
+data_2015 <- data_2015 %>% filter(value < 1) %>% mutate(value = value * 100)
+data_2016 <- data_2016 %>% filter(value < 1) %>% mutate(value = value * 100)
+
+#checking
+
+
+```
+
+#problem 3
+add a year to each dataset
+
+```{r}
+data_2017 <- data_2017 %>% mutate(year = 2017)
+data_2016 <- data_2016 %>% mutate(year = 2016)
+data_2015 <-data_2015 %>% mutate(year = 2015)
+data_2014 <-data_2014 %>% mutate(year = 2014)
+data_2013 <-data_2013 %>% mutate(year = 2013)
+```
+
+#problem 1. categories
+combine the cats in the 2017-2015 data sets ("Mathematics and computer sciences" and "Physical sciences and earth sciences") and call them Physical science",
+in field 3
+b. need to change 2017-2015 "Psychology and social sciences" into "Social sciencesf"
+c. change  'Humanities and arts' in 'Humanities'
+
+
+
+
+```{r}
+#below isn't right since we loose the data
+data_2017 %>% filter(field3 == "Mathematics and computer sciences" | field3 == "Physical sciences and earth sciences") %>% mutate(field3 = "Physical science") 
+
+#data_2017 %>% mutate_if(field3 = "Mathematics and computer sciences", "Mathematics and computer sciences", field3) 
+
+#data_2017 %>% mutate(field3 = case_when(field3 == "Mathematics and computer sciences" ~ "Physical science",
+#                                        field3 == "Physical sciences and earth sciences" ~ "Physical #science")) %>% View()
+
+
+
+#data_2017  %>% mutate(field3 = ifelse(field3 == "Mathematics and computer sciences", "Physical #science", field3 )) %>% View()
+
+
+#data_2017 <- data_2017  %>% mutate(field3 = ifelse(field3 == "Mathematics and computer sciences", "Physical sciencee", ifelse(field3 == "Physical sciences and earth sciences", "Physical sciencee",
+            ifelse(field3 == "Psychology and social sciences", "Social sciencesf",
+            ifelse(field3 == "Humanities and arts", "Humanities",
+            field3)))          ))   
+#data_2016 <- data_2016  %>% mutate(field3 = ifelse(field3 == "Mathematics and computer sciences", "Physical sciencee", ifelse(field3 == "Physical sciences and earth sciences", "Physical sciencee",
+            ifelse(field3 == "Psychology and social sciences", "Social sciencesf",
+            ifelse(field3 == "Humanities and arts", "Humanities",
+            field3)))          ))
+#data_2015 <- data_2015  %>% mutate(field3 = ifelse(field3 == "Mathematics and computer sciences", "Physical sciencee", ifelse(field3 == "Physical sciences and earth sciences", "Physical sciencee",
+            ifelse(field3 == "Psychology and social sciences", "Social sciencesf",
+            ifelse(field3 == "Humanities and arts", "Humanities",
+            field3)))          ))
+
+
+
+data_2017 <- data_2017  %>% mutate(field3 = ifelse(field3 == "Mathematics and computer sciences", "Physical sciencee", ifelse(field3 == "Physical sciences and earth sciences", "Physical sciencee",
+            ifelse(field3 == "Psychology and social sciences", "Social sciencesf",
+            ifelse(field3 == "Humanities and arts", "Humanities",
+            ifelse(field3 == "Othere", "Otherg",       
+            field3)))          ))   ) 
+data_2016 <- data_2016  %>% mutate(field3 = ifelse(field3 == "Mathematics and computer sciences", "Physical sciencee", ifelse(field3 == "Physical sciences and earth sciences", "Physical sciencee",
+            ifelse(field3 == "Psychology and social sciences", "Social sciencesf",
+            ifelse(field3 == "Humanities and arts", "Humanities",
+            ifelse(field3 == "Othere", "Otherg",       
+            field3)))          ))   ) 
+data_2015 <- data_2015  %>% mutate(field3 = ifelse(field3 == "Mathematics and computer sciences", "Physical sciencee", ifelse(field3 == "Physical sciences and earth sciences", "Physical sciencee",
+            ifelse(field3 == "Psychology and social sciences", "Social sciencesf",
+            ifelse(field3 == "Humanities and arts", "Humanities",
+            ifelse(field3 == "Othere", "Otherg",       
+            field3)))          ))   ) 
+
+
+```
+
+
+ok, now the data is mostly good...i don't know if we need it by category by  c'est la vie
+
+
+
+
+
+
+so next step is to put it all together in a single dataframe. i think i can just add them to bottoms of eachother.
+
+```{r}
+data_all<- rbind(data_2013, data_2014, data_2015, data_2016, data_2017)
+
+```
+
+#but noticed parent's data2 issue that the read-ins weren't the same. fixing below
+#BTWs, i probably should have fixed everything at this step? 
+
+
+```{r}
+data_all <- data_all %>% mutate(parents_data2 = ifelse(parents_data2 == "High school\r\nor less", "High school or less",
+                                    ifelse(parents_data2 == "Advanced\r\ndegree", "Advanced degree",
+                                    ifelse(parents_data2 == "Some\r\ncollegea", "Some collegea",
+                                    ifelse(parents_data2 == "Total\r\n(number)", "Total number"        
+  
+  
+  
+, parents_data2)))))
+```
+
+
+#export data
+
+```{r}
+write_csv(data_all, "NSF_data_all.csv")
+```
+
+
+looking at data overtime?
+
+median values by year collapsing catagories
+
+```{r}
+
+data_all %>% filter(!is.na(value)) %>% select(-field1) %>% 
+  filter(field2 == "Field of study",
+         field4 == "Father's education") %>% 
+  group_by(year, parents_data2) %>% 
+  filter(is.na(parents_data1),
+         parents_data2 != "Total number") %>% 
+    summarise(median(value)) %>% 
+  kable(caption = "Father's education()") %>%
+  kable_styling()
+
+
+data_all %>% filter(!is.na(value)) %>% select(-field1) %>% 
+  filter(field2 == "Field of study",
+         field4 == "Mother's education") %>% 
+  group_by(year, parents_data2) %>% 
+  filter(is.na(parents_data1),
+         parents_data2 != "Total number") %>% 
+    summarise(median(value)) %>% 
+  kable(caption = "mother's education()") %>%
+  kable_styling()
+
+```
+
+Father's data
+
+```{r}
+data_all %>% filter(!is.na(value)) %>% select(-field1) %>% 
+  filter(field2 == "Field of study",
+         field4 == "Father's education") %>% 
+  group_by(year, parents_data2) %>% 
+  filter(is.na(parents_data1),
+         parents_data2 != "Total number") %>% 
+    mutate(median = median(value)) %>% 
+  ggplot(aes(x=parents_data2, y = median, fill = parents_data2)) + geom_col() + facet_wrap(~year, scales = "free_y") + coord_flip() + scale_y_continuous(labels= scales::percent_format())
+
+###ok it looks like there is issues with the catagoeis ove rthe years...need to fix that
+
+
+data_all %>% filter(!is.na(value)) %>% select(-field1) %>% 
+  filter(field2 == "Field of study",
+         field4 == "Father's education") %>% 
+  group_by(year, parents_data2) %>% 
+  filter(is.na(parents_data1),
+         parents_data2 != "Total number") %>% 
+    mutate(median = median(value)) %>% 
+  ggplot(aes(x=year, y = median, group=parents_data2)) + geom_line(size=3, aes(color=parents_data2))  + labs(title = "percent of Ph.Ds who have a father with a given ed attainment",
+    color = "level attained")
+
+```
+
+odd that some college ( Includes those who attended college but did not earn a bachelor's.) = less likely than hainvg high school or less
+
+SOmethign is up with the col graphs....
+
+Mother's data
+
+```{r}
+data_all %>% filter(!is.na(value)) %>% select(-field1) %>% 
+  filter(field2 == "Field of study",
+         field4 == "Mother's education") %>% 
+  group_by(year, parents_data2) %>% 
+  filter(is.na(parents_data1),
+         parents_data2 != "Total number") %>% 
+    mutate(median = median(value)) %>% 
+  ggplot(aes(x=parents_data2, y = median, fill = parents_data2)) + geom_col() + facet_wrap(~year, scales = "free_y") + coord_flip() + scale_y_continuous(labels= scales::percent_format()) + labs(title = "mom")
+
+
+data_all %>% filter(!is.na(value)) %>% select(-field1) %>% 
+  filter(field2 == "Field of study",
+         field4 == "Mother's education") %>% 
+  group_by(year, parents_data2) %>% 
+  filter(is.na(parents_data1),
+         parents_data2 != "Total number",
+         year==2013) %>% 
+    mutate(median = median(value)) %>% 
+  ggplot(aes(x=parents_data2, y = median, fill = parents_data2)) + geom_col()  + coord_flip() + #scale_y_continuous(labels= scales::percent_format()) + 
+  labs(title = "mom")
+
+###ok it looks like there is issues with the catagoeis ove rthe years...need to fix that
+
+
+data_all %>% filter(!is.na(value)) %>% select(-field1) %>% 
+  filter(field2 == "Field of study",
+         field4 == "Mother's education") %>% 
+  group_by(year, parents_data2) %>% 
+  filter(is.na(parents_data1),
+         parents_data2 != "Total number") %>% 
+    mutate(median = median(value)) %>% 
+  ggplot(aes(x=year, y = median, group=parents_data2)) + geom_line(size=3, aes(color=parents_data2)) + labs(title = "percent of Ph.Ds who have a mother with a given ed attainment",
+    color = "level attained")
+
+```
+
+
+2013	Advanced degree	23.60
+2013	Bachelor's degree	27.20
+2013	High school or less	32.00
+2013	Some collegea  15.9
