@@ -399,8 +399,18 @@ data_all %>% filter(!is.na(value)) %>% select(-field1) %>%
 
 ```
 
+##more data analysis by type of phd
 
-2013	Advanced degree	23.60
-2013	Bachelor's degree	27.20
-2013	High school or less	32.00
-2013	Some collegea  15.9
+
+```{r}
+data_all %>% filter(!is.na(value)) %>% select(-field1) %>% 
+  filter(field2 == "Field of study",
+         field4 == "Mother's education",
+         !is.na(field3)) %>%
+  group_by(year, field3, parents_data2) %>%
+  filter(parents_data2 != "All",
+         parents_data2 != "Total number") %>%   summarise(median(value)) %>% 
+  kable(caption = "mother's education()") %>%
+  kable_styling()
+```
+
